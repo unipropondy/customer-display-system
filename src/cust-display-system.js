@@ -27,7 +27,18 @@ export default function CustDisplaySystem({ dbName }) {
             const headers = { 'x-db-name': dbName };
             const res = await fetch(`${BASE_URL}/cds-today`, { headers });
             const data = await res.json();
-            setOrders(data);
+            
+            // Handle different response formats:
+            // 1. Raw array [ ... ]
+            // 2. Wrapped object { success: true, data: [ ... ] }
+            if (Array.isArray(data)) {
+                setOrders(data);
+            } else if (data && data.success && Array.isArray(data.data)) {
+                setOrders(data.data);
+            } else {
+                console.error("API returned unexpected format:", data);
+                setOrders([]); 
+            }
             setLoading(false);
         } catch (err) {
             console.error("Error fetching CDS orders:", err);
@@ -56,7 +67,9 @@ export default function CustDisplaySystem({ dbName }) {
         return () => clearInterval(interval);
     }, [orders.length]);
 
-    const displayedOrders = orders.slice(
+    const safeOrders = Array.isArray(orders) ? orders : [];
+
+    const displayedOrders = safeOrders.slice(
         currentPage * CARDS_PER_PAGE,
         (currentPage + 1) * CARDS_PER_PAGE
     );

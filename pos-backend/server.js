@@ -16,7 +16,7 @@ console.log("ENV CHECK 👉", process.env.DB_SERVER);
 app.use(async (req, res, next) => {
   try {
     const dbName = req.headers["x-db-name"] || process.env.DB_NAME;
-    
+
     if (!dbName) {
       return res.status(400).json({ success: false, message: "Database name required" });
     }
@@ -278,6 +278,7 @@ app.get("/cds-today", async (req, res) => {
       INNER JOIN RestaurantOrderDetailCur d 
          ON o.OrderId = d.OrderId
       WHERE ISNULL(d.isDelivered, 0) = 0
+      --AND CAST(o.OrderDateTime AS DATE) = CAST(GETDATE() AS DATE)
       GROUP BY 
         o.OrderId,
         o.OrderNumber,
